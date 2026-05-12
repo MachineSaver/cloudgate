@@ -1,0 +1,556 @@
+https://cloudgateuniverse.com/docs/customize-ui-plugin-tabHow to customize the UI 'Plugin' tab
+This page describes how to customize the 'Plugin' tab on the UI.
+
+ 
+
+The 'Plugin' tab can be customized in the following way:
+
+A developer can change the text of the 'Plugin' tab.
+A developer can set the position of the 'Plugin' tab to the most left position of the navigation bar.
+A developer can, in extend to the previous point, change the home page to one of his 'Plugin' pages.
+ 
+
+Let's give an example on how to do this.
+
+ 
+
+1. The 'Plugin' tab
+The 'Plugin' tab is the tab on the UI shown in the next image.
+
+
+
+ 
+
+2. UCI configuration
+A new UI section with the name 'plugin_ui' must be created.
+
+ 
+
+config ui 'plugin_ui'
+
+option name 'New name of the plugin tab'
+
+option home '1'
+
+option home_page_name 'Name of your application page'
+
+ 
+
+name: name of the 'Plugin' tab. HTML tags are supported. 
+home 1 or 0. If set to 1, the 'Plugin' tab becomes the new home page. The tab will be located on the most left side of the navigation bar. 
+home_page_name: if set, the home page will be the page you registered via the cg_ui_register_page SDK call. If not set, the first available page becomes the home page.
+
+ 
+
+In case you want to do this via command line:
+
+ 
+
+uci set m2mweb.plugin_ui=ui
+
+uci set m2mweb.plugin_ui.name='New name of the plugin tab'
+
+uci set m2mweb.plugin_ui.home='1'
+
+uci set m2mweb.plugin_ui.home_page_name='Name of your application page'
+
+uci commit m2mweb
+
+ 
+
+The next subsections will show you the different options.
+
+ 
+
+2.1 Change the 'Plugin' text
+Let's change the 'Plugin' text to 'Energy meters'. We also want it in red, bold and underlined.
+
+ 
+
+uci set m2mweb.plugin_ui=ui
+
+uci set m2mweb.plugin_ui.name='<font color="red"><strong><u>Energy meters</u></strong></font>'
+
+uci commit m2mweb
+
+ 
+
+The configuration looks like ...
+
+ 
+
+config ui 'plugin_ui'
+
+option name '<font color="red"><strong><u>Energy meters</u></strong></font>'
+
+ 
+
+... and the UI looks like: 
+
+
+
+ 
+
+2.2 Setting the 'Plugin' tab as a home page
+To set the first available page as a home page, do:
+
+ 
+
+uci set m2mweb.plugin_ui=ui
+
+uci set m2mweb.plugin_ui.name='<font color="red"><strong><u>Energy meters</u></strong></font>'
+
+uci set m2mweb.plugin_ui.home=1
+
+uci commit m2mweb
+
+ 
+
+The configuration looks like ...
+
+ 
+
+config ui 'plugin_ui'
+
+option name '<font color="red"><strong><u>Energy meters</u></strong></font>'
+
+option home '1'
+
+ 
+
+.. and the UI looks like:
+
+
+
+ 
+
+Notice the 'Plugin' tab is moved to the most left position. 
+
+When setting the 'Plugin' tab as homepage, the 'Home' tab will be renamed to 'Summary'. (Not shown in the picture above.)
+
+ 
+
+2.3 Setting the 'Plugin' tab as a home page with a specific application page
+To set a specific application page as home page, just add the home_page_name option. The name is the one you registered via the cg_ui_register_page SDK call.
+
+ 
+
+uci set m2mweb.plugin_ui=ui
+
+uci set m2mweb.plugin_ui.name='<font color="red"><strong><u>Energy meters</u></strong></font>'
+
+uci set m2mweb.plugin_ui.home=1
+
+uci set m2mweb.plugin_ui.home_page_name='ui_simple example page'
+
+uci commit m2mweb
+
+ 
+
+The configuration looks like ...
+
+ 
+
+config ui 'plugin_ui'
+
+option name '<font color="red"><strong><u>Energy meters</u></strong></font>'
+
+option home '1'
+
+option home_page_name 'ui_simple example page'
+
+ 
+
+... and the UI - in case the page is not yet available - looks like:  (For example, the application didn't start yet.)
+
+
+
+ 
+
+... and the UI - when the application is loaded - looks like: 
+
+
+
+ 
+
+3 SDK example
+In this example, we create an application which registers three plugin pages. One of the pages will be set as our new home page.
+
+3.1 package
+Starting from the top-level directory of the SDK, create a new directory 'my_app' in the package directory.
+
+ 
+
+mkdir package/my_app
+
+mkdir package/my_app/src (source code of our application)
+
+mkdir -p package/my_app/files/www (Web page of our application)
+
+ 
+
+3.1.1 Makefile
+In the new directory, create a Makefile with the next content:
+
+ 
+
+include $(TOPDIR)/rules.mk
+
+ 
+
+PKG_NAME:=my_app
+
+PKG_VERSION:=1.0
+
+ 
+
+include $(INCLUDE_DIR)/package.mk
+
+include $(INCLUDE_DIR)/nls.mk
+
+ 
+
+define Package/my_app
+
+SECTION:=base
+
+CATEGORY:=Base system
+
+TITLE:=My Application
+
+DEPENDS:=+libcg
+
+endef
+
+ 
+
+define Build/Prepare
+
+$(call Build/Prepare/Default)
+
+$(CP) -l src/* $(PKG_BUILD_DIR)/
+
+$(CP) -r files/* $(PKG_BUILD_DIR)
+
+endef
+
+ 
+
+define Build/Compile
+
+$(MAKE) -C $(PKG_BUILD_DIR) CC="$(TARGET_CC)" LD="$(TARGET_LD)" CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" LDFLAGS="$(TARGET_LDFLAGS)"
+
+endef
+
+ 
+
+define Package/my_app/install
+
+$(INSTALL_DIR) $(1)/my_app/www
+
+$(CP) $(PKG_BUILD_DIR)/my_app $(1)/isv
+
+$(CP) -r $(PKG_BUILD_DIR)/www/* $(1)/my_app/www
+
+endef
+
+ 
+
+$(eval $(call BuildPackage,my_app))
+
+ 
+
+3.1.2 Web pages
+Create three extra HTML files in the package/my_app/files/www directory.
+
+ 
+
+echo "Welcome to page 1." > package/my_app/files/www/page1.html
+
+echo "Welcome to page 2." > package/my_app/files/www/page2.html
+
+echo "Welcome to page 3." > package/my_app/files/www/page3.html
+
+ 
+
+3.1.3 Application
+Create a main.c file in package/my_app/src and add the next content:
+
+ 
+
+#include <stdio.h>
+
+#include <unistd.h>
+
+ 
+
+#include <libcg/cg_general.h>
+
+#include <libcg/cg_ui.h>
+
+ 
+
+#define CONFIG_SYMLINK "www_my_app/"
+
+ 
+
+#define HTML_PAGE_1 "page1.html"
+
+#define HTML_PAGE_2 "page2.html"
+
+#define HTML_PAGE_3 "page3.html"
+
+ 
+
+#define NAME_PAGE_1 "First page"
+
+#define NAME_PAGE_2 "Second page"
+
+#define NAME_PAGE_3 "Third page"
+
+ 
+
+int main (void)
+
+{
+
+cg_status_t cg_status;
+
+ 
+
+cg_status = cg_init("my_app");
+
+ 
+
+if (cg_status != CG_STATUS_OK) {
+
+fprintf(stderr, "Error initializing my_app SDK\n");
+
+return 1;
+
+}
+
+/**
+
+* In the m2mweb configuration file, we specified a symlink www_my_app where our HTML
+
+* files are located. We use this symlink to register our pages.
+
+*/
+
+ 
+
+cg_status |= cg_ui_register_page(NAME_PAGE_1, CONFIG_SYMLINK HTML_PAGE_1);
+
+cg_status |= cg_ui_register_page(NAME_PAGE_2, CONFIG_SYMLINK HTML_PAGE_2);
+
+cg_status |= cg_ui_register_page(NAME_PAGE_3, CONFIG_SYMLINK HTML_PAGE_3);
+
+if(cg_status != CG_STATUS_OK){
+
+cg_system_log(CG_LOG_ERR, "Error registering pages\n");
+
+goto faulty;
+
+}
+
+ 
+
+while (1) {
+
+sleep(1);
+
+}
+
+//Never gets here.
+
+ 
+
+faulty:
+
+cg_ui_deregister_page(NAME_PAGE_1);
+
+cg_ui_deregister_page(NAME_PAGE_2);
+
+cg_ui_deregister_page(NAME_PAGE_3);
+
+cg_deinit();
+
+ 
+
+return 0;
+
+}
+
+ 
+
+In this example, we create three pages via the SDK call cg_ui_register_page. The page names are 'First page', 'Second page' and 'Third page'. We need these names later. Every page name is linked to one HTML page.
+
+ 
+
+3.1.4 Application Makefile
+Create a Makefile in package/my_app/src with the next content:
+
+ 
+
+all: my_app
+
+ 
+
+OBJS = $(patsubst %.c,%.o,$(wildcard *.c))
+
+ 
+
+DEBUG = -ggdb #-O0
+
+override LDFLAGS += -lsms -lcg -lpthread -ljson-c
+
+ 
+
+%.o: %.c
+
+$(CC) $(CFLAGS) $(DEBUG) -fPIC -Wall -Werror -I. -std=gnu99 -c $(<) -o $(@)
+
+ 
+
+my_app: $(OBJS)
+
+$(CC) $(CFLAGS) -o $(@) $(^) $(LDFLAGS)
+
+ 
+
+clean:
+
+rm -f $(OBJS) $(BINS) 
+
+ 
+
+.PHONY: all clean my_app
+
+ 
+
+The my_app directory now looks like:
+
+ 
+
+package/my_app/
+
+├── files
+
+│   └── www
+
+│         ├── page1.html
+
+│         ├── page2.html
+
+│         └── page3.html
+
+├── Makefile
+
+└── src
+
+ ├── main.c
+
+ └── Makefile
+
+ 
+
+3 directories, 6 files
+
+ 
+
+3.2 Configuration
+From the SDK root, create a file m2mweb in config/config
+
+For now, add the next line:
+
+ 
+
+package m2mweb
+
+ 
+
+3.2.1 Symlinks
+We need to tell the GUI that our HTML pages are located in a different path. This can be done by adding a symlink. To the config/config/m2mweb configuration, add the following:
+
+ 
+
+config default 'www_my_app'
+
+option path '/rom/mnt/cust/my_app/www/'
+
+ 
+
+Note that this path is specified in the Makefile.
+
+ 
+
+3.2.2 Plugin configuration
+Now, we can configure the custom plugin. We want the 'Plugin' tab to be renamed to 'My App' and show it in bold. It must be set as the new home page and the home page must be 'First page'. That is the page we registered in the cg_ui_register_page SDK call.
+
+ 
+
+config ui 'plugin_ui'
+
+option name '<strong>My App</strong>'
+
+option home '1'
+
+option home_page_name 'First page'
+
+ 
+
+The complete configuration file looks like:
+
+ 
+
+package m2mweb
+
+config default 'www_my_app'
+
+option path '/rom/mnt/cust/my_app/www/'
+
+config ui 'plugin_ui'
+
+option name '<strong>My App</strong>'
+
+option home '1'
+
+option home_page_name 'First page'
+
+ 
+
+3.3 Compile
+Enable the my_app application first.
+
+ 
+
+make menuconfig -> Base system -> my_app
+
+Keep pressing the space bar until you see a *
+
+Exit and save the changes.
+
+make V=99
+
+ 
+
+Now upload your application to the CloudGate.
+
+ 
+
+3.4 UI
+After rebooting, log in again in the UI. 
+
+
+
+Notice that the home page is set the Page 1.
+
+ 
+
+3.5 Code
+The code can be found here:
+
+My app.zip
+
+
